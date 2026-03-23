@@ -14,11 +14,24 @@ const USER_IDS = [
 
 const STATE_FILE = path.join(__dirname, 'state.json');
 
+async function fetchWithRetry(url, options = {}, retries = 3) {
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    ...options.headers
+  };
+  for (let i = 0; i < retries; i++) {
+    const res = await fetch(url, { ...options, headers });
+    if (res.ok) return res;
+    console.warn(`Attempt ${i + 1} failed: HTTP ${res.status}`);
+    if (i < retries - 1) await new Promise(r => setTimeout(r, 3000 * (i + 1)));
+  }
+  throw new Error(`Failed to fetch ${url} after ${retries} attempts`);
+}
+
 async function main() {
   // 抓取 YouTube RSS Feed
   console.log('Fetching YouTube RSS...');
-  const res = await fetch(RSS_URL);
-  if (!res.ok) throw new Error(`Failed to fetch RSS: ${res.status}`);
+  const res = await fetchWithRetry(RSS_URL);
 
   const xml = await res.text();
   const parsed = await parseStringPromise(xml);
