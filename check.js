@@ -102,6 +102,7 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error('Error:', err);
-  process.exit(1);
+  console.warn('Warning:', err.message);
+  // YouTube 暫時封鎖或網路問題時，以成功退出避免 GitHub 發失敗通知
+  process.exit(0);
 });
